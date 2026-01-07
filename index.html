@@ -1,6 +1,673 @@
-<html>
-<head><title>Cory's Website</title></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triple Yahtzee</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: transparent;
+            border-radius: 0;
+            padding: 30px;
+            box-shadow: none;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+        }
+
+        .dice-container {
+            display: flex;
+            justify-content: center;
+            gap: 7px;
+            flex-wrap: nowrap;
+        }
+
+        .die-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .die {
+            width: 75px;
+            height: 75px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8em;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: black;
+            padding-bottom: 10px;
+        }
+
+        .die:hover {
+            transform: translateY(-5px);
+        }
+
+        .die.kept {
+            /*background: #90EE90;*/
+            background: red;
+        }
+
+        .keep-label {
+            font-size: 0.9em;
+            color: #666;
+            font-weight: bold;
+            display: none;
+        }
+
+        .dice-instruction {
+            text-align: center;
+            font-size: 1.1em;
+            color: #666;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .roll-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+
+        .roll-btn:hover:not(:disabled) {
+            background: #45a049;
+            transform: scale(1.05);
+        }
+
+        .roll-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .new-game-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0 10px;
+            transition: all 0.3s;
+        }
+
+        .new-game-btn:hover {
+            background: #0b7dda;
+        }
+
+        .info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .info-item {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-top: 30px;
+        }
+
+        .scorecard {
+            overflow-x: auto;
+            padding: 20px;
+            width:500px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0px;
+        }
+
+        th, td {
+            padding: 2px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+
+        th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .category-name {
+            text-align: left;
+            font-weight: bold;
+            background: #f5f5f5;
+        }
+
+        .score-btn {
+            background: #FFF9C4;
+            border: 2px solid #FBC02D;
+            /*padding: 8px 15px;*/
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: all 0.2s;
+            width: 50px;
+        }
+
+        .score-btn:hover {
+            background: #FFF176;
+            transform: scale(1.05);
+        }
+
+        .score-btn:disabled {
+            background: #e0e0e0;
+            border-color: #999;
+            cursor: not-allowed;
+        }
+
+        .scored {
+            background: #e0e0e0;
+            font-weight: bold;
+        }
+
+        .bonus-row {
+            background: #E3F2FD;
+        }
+
+        .total-row {
+            background: #C8E6C9;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .grand-total {
+            background: #81C784;
+            font-size: 1.2em;
+        }
+
+        .separator {
+            height: 10px;
+            background: #f5f5f5;
+        }
+
+            @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+                margin-bottom: 15px;
+            }
+
+            .die {
+                width: 80px;
+                height: 80px;
+                font-size: 6em;
+            }
+
+            table {
+                font-size: 0.85em;
+            }
+
+            th, td {
+                padding: 6px;
+            }
+        }
+    </style>
+</head>
 <body>
-<h2>Cory's Website</h2>
+    <div class="container">
+        <div style="display: flex; flex-flow: row nowrap; justify-content: center;">
+        <div style="width:500px">
+        <h1>🎲 Cory's Triple Ytzee 🎲</h1>
+
+        <div class="dice-container" id="diceContainer"></div>
+
+        <div class="dice-instruction">Click on a die to keep it</div>
+
+        <div class="controls">
+            <button class="roll-btn" id="rollBtn" onclick="rollDice()">ROLL DICE</button>
+            <button class="new-game-btn" onclick="newGame()">New Game</button>
+
+
+        <div class="info">
+            <div class="info-item">Rolls Left: <span id="rollsLeft">3</span></div>
+        </div>
+        </div>
+        </div>
+        <div>
+        <div class="scorecard">
+            <table id="scoreTable"></table>
+        </div>
+        </div>
+        </div>
+ 
+    </div>
+
+    <script>
+        let dice = [1, 1, 1, 1, 1];
+        let kept = [false, false, false, false, false];
+        let rollsLeft = 3;
+        let yahtzeeBonus = [0, 0, 0];
+        let hasRolled = false; // Track if player has rolled at least once
+
+        let scores = {
+            ones: [null, null, null],
+            twos: [null, null, null],
+            threes: [null, null, null],
+            fours: [null, null, null],
+            fives: [null, null, null],
+            sixes: [null, null, null],
+            threeKind: [null, null, null],
+            fourKind: [null, null, null],
+            fullHouse: [null, null, null],
+            smStraight: [null, null, null],
+            lgStraight: [null, null, null],
+            yahtzee: [null, null, null],
+            chance: [null, null, null]
+        };
+
+        function init() {
+            // Randomly generate initial dice values
+            const dieFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            for (let i = 0; i < 5; i++) {
+                dice[i] = Math.floor(Math.random() * 6) + 1;
+            }
+            
+            hasRolled = false; // Reset roll status
+            
+            createDice();
+            createScorecard();
+            
+            // Update dice display with random values
+            for (let i = 0; i < 5; i++) {
+                document.getElementById(`die${i}`).textContent = dieFaces[dice[i] - 1];
+            }
+            
+            updateDisplay();
+            
+            // Automatically roll the dice for the first turn
+            rollDice();
+        }
+
+        function createDice() {
+            const container = document.getElementById('diceContainer');
+            container.innerHTML = '';
+            
+            const dieFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            
+            for (let i = 0; i < 5; i++) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'die-wrapper';
+                
+                const die = document.createElement('div');
+                die.className = 'die';
+                die.id = `die${i}`;
+                die.textContent = dieFaces[0];
+                die.onclick = () => toggleKeep(i);
+                
+                const label = document.createElement('div');
+                label.className = 'keep-label';
+                label.textContent = 'Click to keep';
+                
+                wrapper.appendChild(die);
+                wrapper.appendChild(label);
+                container.appendChild(wrapper);
+            }
+        }
+
+        function createScorecard() {
+            const table = document.getElementById('scoreTable');
+            
+            const categories = [
+                { name: 'Ones', key: 'ones' },
+                { name: 'Twos', key: 'twos' },
+                { name: 'Threes', key: 'threes' },
+                { name: 'Fours', key: 'fours' },
+                { name: 'Fives', key: 'fives' },
+                { name: 'Sixes', key: 'sixes' },
+                { name: '', key: 'sep1', separator: true },
+                { name: 'Upper Bonus', key: 'upperBonus', bonus: true },
+                { name: '', key: 'sep2', separator: true },
+                { name: '3 of a Kind', key: 'threeKind' },
+                { name: '4 of a Kind', key: 'fourKind' },
+                { name: 'Full House', key: 'fullHouse' },
+                { name: 'Sm Straight', key: 'smStraight' },
+                { name: 'Lg Straight', key: 'lgStraight' },
+                { name: 'YAHTZEE', key: 'yahtzee' },
+                { name: 'Chance', key: 'chance' },
+                { name: '', key: 'sep3', separator: true },
+                { name: 'Yahtzee Bonus', key: 'yahtzeeBonus', bonus: true },
+                { name: '', key: 'sep4', separator: true },
+                { name: 'TOTAL', key: 'total', total: true }
+            ];
+
+            let html = '<thead><tr><th>Category</th><th>Single</th><th>Double</th><th>Triple</th><th>Total</th></tr></thead><tbody>';
+
+            categories.forEach(cat => {
+                if (cat.separator) {
+                    html += '<tr class="separator"><td colspan="5"></td></tr>';
+                } else if (cat.bonus) {
+                    html += `<tr class="bonus-row"><td class="category-name">${cat.name}</td>`;
+                    for (let i = 0; i < 3; i++) {
+                        html += `<td id="${cat.key}_${i}">0</td>`;
+                    }
+                    html += `<td id="${cat.key}_total">0</td></tr>`;
+                } else if (cat.total) {
+                    html += `<tr class="total-row"><td class="category-name">${cat.name}</td>`;
+                    for (let i = 0; i < 3; i++) {
+                        html += `<td id="total_${i}">0</td>`;
+                    }
+                    html += `<td class="grand-total" id="grand_total">0</td></tr>`;
+                } else {
+                    html += `<tr><td class="category-name">${cat.name}</td>`;
+                    for (let i = 0; i < 3; i++) {
+                        html += `<td id="${cat.key}_${i}"></td>`;
+                    }
+                    html += `<td id="${cat.key}_total">0</td></tr>`;
+                }
+            });
+
+            html += '</tbody>';
+            table.innerHTML = html;
+        }
+
+        function toggleKeep(index) {
+            kept[index] = !kept[index];
+            const die = document.getElementById(`die${index}`);
+            if (kept[index]) {
+                die.classList.add('kept');
+            } else {
+                die.classList.remove('kept');
+            }
+        }
+
+        function rollDice() {
+            if (rollsLeft === 0) {
+                alert('You must score a category first!');
+                return;
+            }
+
+            const dieFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+            
+            for (let i = 0; i < 5; i++) {
+                if (!kept[i]) {
+                    dice[i] = Math.floor(Math.random() * 6) + 1;
+                    document.getElementById(`die${i}`).textContent = dieFaces[dice[i] - 1];
+                }
+            }
+
+            rollsLeft--;
+            hasRolled = true; // Mark that player has rolled
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('rollsLeft').textContent = rollsLeft;
+            document.getElementById('rollBtn').disabled = rollsLeft === 0;
+
+            updatePotentialScores();
+            updateTotals();
+        }
+
+        function updatePotentialScores() {
+            const categories = ['ones', 'twos', 'threes', 'fours', 'fives', 'sixes', 
+                              'threeKind', 'fourKind', 'fullHouse', 'smStraight', 
+                              'lgStraight', 'yahtzee', 'chance'];
+
+            categories.forEach(cat => {
+                for (let col = 0; col < 3; col++) {
+                    const cell = document.getElementById(`${cat}_${col}`);
+                    if (scores[cat][col] === null) {
+                        if (hasRolled) {
+                            const baseScore = calculateScore(cat);
+                            const multiplier = col + 1; // Column 1 = 1x, Column 2 = 2x, Column 3 = 3x
+                            const finalScore = baseScore * multiplier;
+                            cell.innerHTML = `<button class="score-btn" onclick="scoreCategory('${cat}', ${col})">${finalScore}</button>`;
+                        } else {
+                            cell.innerHTML = '0';
+                        }
+                    } else {
+                        cell.innerHTML = scores[cat][col];
+                        cell.classList.add('scored');
+                    }
+                }
+            });
+        }
+
+        function calculateScore(category) {
+            const counts = [0, 0, 0, 0, 0, 0, 0];
+            dice.forEach(die => counts[die]++);
+
+            switch(category) {
+                case 'ones': return counts[1] * 1;
+                case 'twos': return counts[2] * 2;
+                case 'threes': return counts[3] * 3;
+                case 'fours': return counts[4] * 4;
+                case 'fives': return counts[5] * 5;
+                case 'sixes': return counts[6] * 6;
+                case 'threeKind': return Math.max(...counts) >= 3 ? dice.reduce((a, b) => a + b, 0) : 0;
+                case 'fourKind': return Math.max(...counts) >= 4 ? dice.reduce((a, b) => a + b, 0) : 0;
+                case 'fullHouse': return (counts.includes(3) && counts.includes(2)) ? 25 : 0;
+                case 'smStraight': return hasSmallStraight() ? 30 : 0;
+                case 'lgStraight': return hasLargeStraight() ? 40 : 0;
+                case 'yahtzee': return Math.max(...counts) === 5 ? 50 : 0;
+                case 'chance': return dice.reduce((a, b) => a + b, 0);
+                default: return 0;
+            }
+        }
+
+        function hasSmallStraight() {
+            const sorted = [...new Set(dice)].sort((a, b) => a - b);
+            for (let i = 0; i <= sorted.length - 4; i++) {
+                if (sorted[i+1] === sorted[i]+1 && 
+                    sorted[i+2] === sorted[i]+2 && 
+                    sorted[i+3] === sorted[i]+3) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function hasLargeStraight() {
+            const sorted = [...dice].sort((a, b) => a - b);
+            return (sorted.join('') === '12345' || sorted.join('') === '23456');
+        }
+
+        function scoreCategory(category, column) {
+            if (rollsLeft === 3) {
+                alert('You must roll the dice first!');
+                return;
+            }
+
+            if (scores[category][column] !== null) {
+                return;
+            }
+
+            const counts = [0, 0, 0, 0, 0, 0, 0];
+            dice.forEach(die => counts[die]++);
+            const isYahtzee = Math.max(...counts) === 5;
+
+            if (category !== 'yahtzee' && isYahtzee && scores.yahtzee[column] === 50 * (column + 1)) {
+                const bonusAmount = 100 * (column + 1); // Bonus is also multiplied
+                yahtzeeBonus[column] += bonusAmount;
+                alert(`Yahtzee Bonus! +${bonusAmount} points!`);
+            }
+
+            const baseScore = calculateScore(category);
+            const multiplier = column + 1; // Column 1 = 1x, Column 2 = 2x, Column 3 = 3x
+            const finalScore = baseScore * multiplier;
+            scores[category][column] = finalScore;
+
+            const cell = document.getElementById(`${category}_${column}`);
+            cell.innerHTML = finalScore;
+            cell.classList.add('scored');
+
+            checkGameComplete();
+            resetTurnAndRoll();
+        }
+
+        function checkGameComplete() {
+            const allCategories = Object.keys(scores);
+            let allColumnsComplete = true;
+
+            for (let col = 0; col < 3; col++) {
+                const columnComplete = allCategories.every(cat => scores[cat][col] !== null);
+                if (!columnComplete) {
+                    allColumnsComplete = false;
+                }
+            }
+
+            if (allColumnsComplete) {
+                endGame();
+            }
+        }
+
+        function resetTurn() {
+            rollsLeft = 3;
+            kept = [false, false, false, false, false];
+            hasRolled = false; // Reset roll status for next turn
+            
+            for (let i = 0; i < 5; i++) {
+                document.getElementById(`die${i}`).classList.remove('kept');
+            }
+
+            updateDisplay();
+        }
+
+        function resetTurnAndRoll() {
+            rollsLeft = 3;
+            kept = [false, false, false, false, false];
+            
+            for (let i = 0; i < 5; i++) {
+                document.getElementById(`die${i}`).classList.remove('kept');
+            }
+
+            // Automatically roll the dice for the new turn
+            rollDice();
+        }
+
+        function updateTotals() {
+            const upperCategories = ['ones', 'twos', 'threes', 'fours', 'fives', 'sixes'];
+
+            for (let col = 0; col < 3; col++) {
+                let upperTotal = 0;
+                upperCategories.forEach(cat => {
+                    if (scores[cat][col] !== null) {
+                        upperTotal += scores[cat][col];
+                    }
+                });
+
+                // Upper bonus threshold is also multiplied by column
+                const bonusThreshold = 63 * (col + 1);
+                const bonusAmount = 35 * (col + 1);
+                const upperBonus = upperTotal >= bonusThreshold ? bonusAmount : 0;
+                document.getElementById(`upperBonus_${col}`).textContent = upperBonus;
+
+                document.getElementById(`yahtzeeBonus_${col}`).textContent = yahtzeeBonus[col];
+
+                let total = upperBonus + yahtzeeBonus[col];
+                Object.keys(scores).forEach(cat => {
+                    if (scores[cat][col] !== null) {
+                        total += scores[cat][col];
+                    }
+                });
+
+                document.getElementById(`total_${col}`).textContent = total;
+            }
+
+            Object.keys(scores).forEach(cat => {
+                let rowTotal = 0;
+                for (let col = 0; col < 3; col++) {
+                    if (scores[cat][col] !== null) {
+                        rowTotal += scores[cat][col];
+                    }
+                }
+                document.getElementById(`${cat}_total`).textContent = rowTotal;
+            });
+
+            let upperBonusTotal = 0;
+            let yahtzeeTotal = 0;
+            for (let col = 0; col < 3; col++) {
+                upperBonusTotal += parseInt(document.getElementById(`upperBonus_${col}`).textContent);
+                yahtzeeTotal += yahtzeeBonus[col];
+            }
+            document.getElementById('upperBonus_total').textContent = upperBonusTotal;
+            document.getElementById('yahtzeeBonus_total').textContent = yahtzeeTotal;
+
+            let grandTotal = 0;
+            for (let col = 0; col < 3; col++) {
+                grandTotal += parseInt(document.getElementById(`total_${col}`).textContent);
+            }
+            document.getElementById('grand_total').textContent = grandTotal;
+        }
+
+        function endGame() {
+            const grandTotal = parseInt(document.getElementById('grand_total').textContent);
+            alert(`🎉 Congratulations! Game Complete!\n\nFinal Score: ${grandTotal}`);
+            document.getElementById('rollBtn').disabled = true;
+        }
+
+        function newGame() {
+            dice = [1, 1, 1, 1, 1];
+            kept = [false, false, false, false, false];
+            rollsLeft = 3;
+            yahtzeeBonus = [0, 0, 0];
+            hasRolled = false;
+
+            scores = {
+                ones: [null, null, null],
+                twos: [null, null, null],
+                threes: [null, null, null],
+                fours: [null, null, null],
+                fives: [null, null, null],
+                sixes: [null, null, null],
+                threeKind: [null, null, null],
+                fourKind: [null, null, null],
+                fullHouse: [null, null, null],
+                smStraight: [null, null, null],
+                lgStraight: [null, null, null],
+                yahtzee: [null, null, null],
+                chance: [null, null, null]
+            };
+
+            init();
+        }
+
+        init();
+    </script>
 </body>
 </html>
