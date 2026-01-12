@@ -23,7 +23,6 @@
             margin: 0 auto;
             background: transparent;
             border-radius: 0;
-            /*padding: 30px;*/
             box-shadow: none;
         }
 
@@ -66,7 +65,6 @@
         }
 
         .die.kept {
-            /*background: #90EE90;*/
             background: red;
         }
 
@@ -178,7 +176,6 @@
         .score-btn {
             background: #FFF9C4;
             border: 2px solid #FBC02D;
-            /*padding: 8px 15px;*/
             cursor: pointer;
             border-radius: 5px;
             font-weight: bold;
@@ -222,7 +219,114 @@
             background: #f5f5f5;
         }
 
-            @media (max-width: 768px) {
+        .leaderboard {
+            background: #f9f9f9;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 30px;
+            width: 500px;
+        }
+
+        .leaderboard h2 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .leaderboard-entry.rank-1 {
+            background: #FFD700;
+            font-weight: bold;
+        }
+
+        .leaderboard-entry.rank-2 {
+            background: #C0C0C0;
+        }
+
+        .leaderboard-entry.rank-3 {
+            background: #CD7F32;
+        }
+
+        .leaderboard-rank {
+            font-weight: bold;
+            color: #333;
+            min-width: 30px;
+        }
+
+        .leaderboard-name {
+            flex-grow: 1;
+            text-align: left;
+            padding: 0 15px;
+        }
+
+        .leaderboard-score {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 30px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .modal-content h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.1em;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+
+        .modal-content button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .modal-content button:hover {
+            background: #45a049;
+        }
+
+        @media (max-width: 768px) {
             .container {
                 padding: 15px;
             }
@@ -245,12 +349,16 @@
             th, td {
                 padding: 6px;
             }
+
+            .leaderboard {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div style="display: flex; flex-flow: row nowrap; justify-content: center;">
+        <div style="display: flex; flex-flow: row nowrap; justify-content: center; flex-wrap: wrap; gap: 20px;">
         <div style="width:500px">
         <h1>🎲 Cory's Triple Yahtzee 🎲</h1>
 
@@ -262,10 +370,14 @@
             <button class="roll-btn" id="rollBtn" onclick="rollDice()">ROLL DICE</button>
             <button class="new-game-btn" onclick="newGame()">New Game</button>
 
-
         <div class="info">
             <div class="info-item">Rolls Left: <span id="rollsLeft">3</span></div>
         </div>
+        </div>
+
+        <div class="leaderboard">
+            <h2>🏆 Top 5 Scores 🏆</h2>
+            <div id="leaderboardList"></div>
         </div>
         </div>
         <div>
@@ -277,12 +389,24 @@
  
     </div>
 
+    <!-- Modal for name entry -->
+    <div id="nameModal" class="modal">
+        <div class="modal-content">
+            <h2>🎉 Top 5 Score!</h2>
+            <p>Congratulations! You made it to the top 5!</p>
+            <p>Your score: <span id="modalScore"></span></p>
+            <input type="text" id="playerName" placeholder="Enter your name" maxlength="20">
+            <button onclick="submitScore()">Submit Score</button>
+        </div>
+    </div>
+
     <script>
         let dice = [1, 1, 1, 1, 1];
         let kept = [false, false, false, false, false];
         let rollsLeft = 3;
         let yahtzeeBonus = [0, 0, 0];
-        let hasRolled = false; // Track if player has rolled at least once
+        let hasRolled = false;
+        let finalScore = 0;
 
         let scores = {
             ones: [null, null, null],
@@ -300,26 +424,122 @@
             chance: [null, null, null]
         };
 
+        function loadLeaderboard() {
+            try {
+                console.log('Loading leaderboard...');
+                const stored = localStorage.getItem('yahtzee-leaderboard');
+                console.log('Storage result:', stored);
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    console.log('Parsed leaderboard:', parsed);
+                    return parsed;
+                }
+            } catch (error) {
+                console.log('No leaderboard found or error:', error);
+            }
+            return [];
+        }
+
+        function saveLeaderboard(leaderboard) {
+            try {
+                console.log('Saving leaderboard:', leaderboard);
+                localStorage.setItem('yahtzee-leaderboard', JSON.stringify(leaderboard));
+                console.log('Save successful');
+            } catch (error) {
+                console.error('Error saving leaderboard:', error);
+            }
+        }
+
+        function displayLeaderboard() {
+            console.log('Displaying leaderboard...');
+            const listDiv = document.getElementById('leaderboardList');
+            
+            if (!listDiv) {
+                console.error('Leaderboard list div not found!');
+                return;
+            }
+            
+            const leaderboard = loadLeaderboard();
+            console.log('Leaderboard to display:', leaderboard);
+            
+            if (!leaderboard || leaderboard.length === 0) {
+                listDiv.innerHTML = '<p style="text-align: center; color: #666;">No scores yet. Be the first!</p>';
+                return;
+            }
+
+            let html = '';
+            leaderboard.forEach((entry, index) => {
+                const rankClass = index === 0 ? 'rank-1' : index === 1 ? 'rank-2' : index === 2 ? 'rank-3' : '';
+                html += `
+                    <div class="leaderboard-entry ${rankClass}">
+                        <span class="leaderboard-rank">#${index + 1}</span>
+                        <span class="leaderboard-name">${entry.name}</span>
+                        <span class="leaderboard-score">${entry.score}</span>
+                    </div>
+                `;
+            });
+            listDiv.innerHTML = html;
+            console.log('Leaderboard displayed');
+        }
+
+        function checkTopScore(score) {
+            const leaderboard = loadLeaderboard();
+            
+            if (leaderboard.length < 5) {
+                return true;
+            }
+            
+            return score > leaderboard[leaderboard.length - 1].score;
+        }
+
+        function addToLeaderboard(name, score) {
+            let leaderboard = loadLeaderboard();
+            
+            leaderboard.push({ name, score });
+            leaderboard.sort((a, b) => b.score - a.score);
+            leaderboard = leaderboard.slice(0, 5);
+            
+            saveLeaderboard(leaderboard);
+            displayLeaderboard();
+        }
+
+        function showNameModal(score) {
+            finalScore = score;
+            document.getElementById('modalScore').textContent = score;
+            document.getElementById('nameModal').style.display = 'block';
+            document.getElementById('playerName').focus();
+        }
+
+        function submitScore() {
+            const name = document.getElementById('playerName').value.trim();
+            
+            if (!name) {
+                alert('Please enter your name!');
+                return;
+            }
+
+            addToLeaderboard(name, finalScore);
+            document.getElementById('nameModal').style.display = 'none';
+            document.getElementById('playerName').value = '';
+        }
+
         function init() {
-            // Randomly generate initial dice values
             const dieFaces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
             for (let i = 0; i < 5; i++) {
                 dice[i] = Math.floor(Math.random() * 6) + 1;
             }
             
-            hasRolled = false; // Reset roll status
+            hasRolled = false;
             
             createDice();
             createScorecard();
+            displayLeaderboard();
             
-            // Update dice display with random values
             for (let i = 0; i < 5; i++) {
                 document.getElementById(`die${i}`).textContent = dieFaces[dice[i] - 1];
             }
             
             updateDisplay();
-            
-            // Automatically roll the dice for the first turn
             rollDice();
         }
 
@@ -431,7 +651,7 @@
             }
 
             rollsLeft--;
-            hasRolled = true; // Mark that player has rolled
+            hasRolled = true;
             updateDisplay();
         }
 
@@ -454,7 +674,7 @@
                     if (scores[cat][col] === null) {
                         if (hasRolled) {
                             const baseScore = calculateScore(cat);
-                            const multiplier = col + 1; // Column 1 = 1x, Column 2 = 2x, Column 3 = 3x
+                            const multiplier = col + 1;
                             const finalScore = baseScore * multiplier;
                             cell.innerHTML = `<button class="score-btn" onclick="scoreCategory('${cat}', ${col})">${finalScore}</button>`;
                         } else {
@@ -522,13 +742,13 @@
             const isYahtzee = Math.max(...counts) === 5;
 
             if (category !== 'yahtzee' && isYahtzee && scores.yahtzee[column] === 50 * (column + 1)) {
-                const bonusAmount = 100 * (column + 1); // Bonus is also multiplied
+                const bonusAmount = 100 * (column + 1);
                 yahtzeeBonus[column] += bonusAmount;
                 alert(`Yahtzee Bonus! +${bonusAmount} points!`);
             }
 
             const baseScore = calculateScore(category);
-            const multiplier = column + 1; // Column 1 = 1x, Column 2 = 2x, Column 3 = 3x
+            const multiplier = column + 1;
             const finalScore = baseScore * multiplier;
             scores[category][column] = finalScore;
 
@@ -540,7 +760,7 @@
             resetTurnAndRoll();
         }
 
-        function checkGameComplete() {
+        async function checkGameComplete() {
             const allCategories = Object.keys(scores);
             let allColumnsComplete = true;
 
@@ -559,7 +779,7 @@
         function resetTurn() {
             rollsLeft = 3;
             kept = [false, false, false, false, false];
-            hasRolled = false; // Reset roll status for next turn
+            hasRolled = false;
             
             for (let i = 0; i < 5; i++) {
                 document.getElementById(`die${i}`).classList.remove('kept');
@@ -576,7 +796,6 @@
                 document.getElementById(`die${i}`).classList.remove('kept');
             }
 
-            // Automatically roll the dice for the new turn
             rollDice();
         }
 
@@ -591,7 +810,6 @@
                     }
                 });
 
-                // Upper bonus threshold is also multiplied by column
                 const bonusThreshold = 63 * (col + 1);
                 const bonusAmount = 35 * (col + 1);
                 const upperBonus = upperTotal >= bonusThreshold ? bonusAmount : 0;
@@ -637,8 +855,15 @@
 
         function endGame() {
             const grandTotal = parseInt(document.getElementById('grand_total').textContent);
-            alert(`🎉 Congratulations! Game Complete!\n\nFinal Score: ${grandTotal}`);
             document.getElementById('rollBtn').disabled = true;
+            
+            const isTopScore = checkTopScore(grandTotal);
+            
+            if (isTopScore) {
+                showNameModal(grandTotal);
+            } else {
+                alert(`🎉 Congratulations! Game Complete!\n\nFinal Score: ${grandTotal}`);
+            }
         }
 
         function newGame() {
@@ -667,6 +892,16 @@
             init();
         }
 
+        // Allow Enter key to submit name
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('playerName').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    submitScore();
+                }
+            });
+        });
+
+        // Initialize the game
         init();
     </script>
 </body>
